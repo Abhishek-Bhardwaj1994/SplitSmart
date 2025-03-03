@@ -1,0 +1,24 @@
+Core Features
+✅ Image capturing using the device camera
+✅ Image upload from the gallery
+✅ Auto capture when the object is aligned
+✅ Auto-cropping and image enhancement
+✅ Multi-page scanning
+✅ OCR (text extraction)
+
+Image Editing
+✅ Crop, rotate, and adjust image
+✅ Various filters (color, black & white)
+✅ Brightness adjustment
+
+Processing & Export
+✅ PDF conversion
+✅ Export as PDF or text
+
+Storage & Sharing
+✅ Save to local device
+✅ Save to Google Drive & Dropbox
+✅ Share PDF or JPG via email and messaging apps
+
+User Experience
+✅ User-friendly screens for scanning, previewing, and exporting documents
