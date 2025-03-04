@@ -1,24 +1,36 @@
-Core Features
-✅ Image capturing using the device camera
-✅ Image upload from the gallery
-✅ Auto capture when the object is aligned
-✅ Auto-cropping and image enhancement
-✅ Multi-page scanning
-✅ OCR (text extraction)
+📸 Scanning & Image Handling
+Capture images using the device camera
+Upload images from the gallery
+Auto-capture when the document is properly aligned
+Auto-cropping and perspective correction
+Apply various filters (color, black & white, grayscale, etc.)
+Basic image editing (crop, brightness, contrast adjustments, etc.)
+Multi-page scanning (scan multiple pages into a single document)
+Rearrange or delete pages before merging them into a single PDF
 
-Image Editing
-✅ Crop, rotate, and adjust image
-✅ Various filters (color, black & white)
-✅ Brightness adjustment
+📝 OCR (Text Extraction)
+Extract text from scanned images using OCR
+Support for multiple languages in OCR
+Allow users to copy, edit, or share extracted text
 
-Processing & Export
-✅ PDF conversion
-✅ Export as PDF or text
+📂 PDF Handling & Export
+Convert scanned documents into PDF
+Merge multiple scanned pages into a single PDF
+Compress PDF before exporting
+Lock PDFs with a password
+Export scanned files as PDF or text
+Save scanned documents locally on the device (Works offline)
 
-Storage & Sharing
-✅ Save to local device
-✅ Save to Google Drive & Dropbox
-✅ Share PDF or JPG via email and messaging apps
+📤 Sharing & Cloud Storage
+Share scanned documents as PDF or JPG via email and messaging apps
+Save to cloud storage (Google Drive, Dropbox, etc.)
+Internet is required only for sharing and saving to cloud services
 
-User Experience
-✅ User-friendly screens for scanning, previewing, and exporting documents
+🖥️ User Interface & Experience
+User-friendly screens for scanning, previewing, and exporting documents
+Intuitive navigation and UI design for a smooth user experience
+
+🔄 Additional Enhancements
+Batch processing (process multiple documents at once)
+Add annotations or signatures on scanned documents
+Offline functionality for capturing, processing, and saving
