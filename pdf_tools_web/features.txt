@@ -1,0 +1,39 @@
+📄 PDF Conversion Tools
+✅ 1. PDF to Word → Convert PDF files into editable DOCX format.
+✅ 2. Word to PDF → Convert DOCX files into PDFs.
+✅ 3. PDF to Images → Extract PDF pages as JPG, PNG, or HEIF.
+✅ 4. Images to PDF → Convert JPG, PNG, HEIF, or HEIC into a single PDF.
+✅ 5. HEIF to PDF → Convert HEIF/HEIC images into PDF format.
+✅ 6. PDF to HEIF → Extract PDF pages and save them as HEIF images.
+
+✂️ PDF Editing & Manipulation
+✅ 7. Merge PDFs → Combine multiple PDFs into one.
+✅ 8. Split PDFs → Extract or separate specific pages into new files.
+✅ 9. Rotate & Reorder Pages → Change the order or orientation of pages.
+✅ 10. Add Text to PDF → Insert custom text anywhere in a PDF.
+✅ 11. Insert Images into PDF → Embed images inside PDF pages.
+✅ 12. Apply Filters to PDF → Adjust brightness, contrast, grayscale, etc.
+✅ 13. Delete Pages from PDF → Remove unwanted pages from a PDF.
+
+🔐 Security & Optimization
+✅ 14. Password-Protect PDFs → Encrypt PDF files with a password.
+✅ 15. Unlock PDFs → Remove passwords from secured PDFs.
+✅ 16. Compress PDFs → Reduce file size while maintaining quality.
+
+📂 User & Interface Features
+✅ 17. Drag & Drop Upload → Easy file selection with a simple interface.
+✅ 18. Multi-File Upload → Process multiple PDFs at once.
+✅ 19. Preview Before Processing → View files before conversion or editing.
+✅ 20. Download Processed PDFs → No storage; just generate a secure download link.
+✅ 21. Dark & Light Mode → User-friendly UI with theme switching.
+
+🌍 Backend & Deployment Features
+✅ 22. API-Based Processing → Backend handles all operations via API calls.
+✅ 23. No Data Storage → Temporary file processing only.
+✅ 24. Docker Integration → Full support for containerized deployment (Hostinger VPS).
+✅ 25. Cloud Storage Support (Optional) → Upload/download via Google Drive or Dropbox.
+✅ 26. Secure File Handling → Auto-delete files after processing.
+
+🔐 Optional Authentication & User Accounts
+✅ 27. User Registration & Login → Sign up via email or Google OAuth.
+✅ 28. User Dashboard → Keep track of recent processing history.
