@@ -1,0 +1,49 @@
+pdf-tools-app/
+│── backend/                 # Django Backend
+│   ├── pdf_processing/      # Django app for PDF tools
+│   │   ├── migrations/      
+│   │   ├── static/          
+│   │   ├── templates/       
+│   │   ├── __init__.py      
+│   │   ├── admin.py         
+│   │   ├── apps.py          
+│   │   ├── models.py        # Database models (Users, Processed PDFs, etc.)
+│   │   ├── serializers.py   # Django Rest Framework serializers
+│   │   ├── urls.py          # Backend API endpoints
+│   │   ├── views.py         # Merge, Split, Convert, Edit PDF functions
+│   │   ├── utils.py         # Helper functions for PDF operations
+│   │   ├── tasks.py         # Background processing tasks (if needed)
+│   ├── authentication/      # Django app for authentication
+│   │   ├── __init__.py
+│   │   ├── models.py        # User model (if custom)
+│   │   ├── serializers.py   # Auth serializers (Register, Login, JWT)
+│   │   ├── urls.py          # Login, Register, Logout API endpoints
+│   │   ├── views.py         # Auth API views
+│   │   ├── tokens.py        # JWT authentication tokens
+│   ├── media/               # Temporary storage for uploaded PDFs
+│   ├── settings.py          # Django settings (including authentication & JWT)
+│   ├── urls.py              # Main URL configurations
+│   ├── wsgi.py              # WSGI entry point for production
+│   ├── asgi.py              # ASGI entry point for async support
+│   ├── manage.py            # Django management commands
+│   ├── requirements.txt     # Backend dependencies
+│   ├── Dockerfile           # Backend Docker configuration
+│
+│── frontend/                # React Frontend
+│   ├── public/              # Static files (index.html, favicons, etc.)
+│   ├── src/                 # Source code for React app
+│   │   ├── components/      # Reusable UI components (Navbar, Buttons, Forms)
+│   │   ├── pages/           # Main pages (Home, Login, Signup, Upload, etc.)
+│   │   ├── services/        # API service functions (Auth, PDF operations)
+│   │   ├── hooks/           # Custom React hooks (useAuth, usePDFTools)
+│   │   ├── context/         # Global Auth Context (JWT Handling)
+│   │   ├── styles/          # Global styles (CSS/SCSS)
+│   │   ├── App.js           # Main React App component
+│   │   ├── index.js         # Entry point
+│   ├── package.json         # Frontend dependencies
+│   ├── Dockerfile           # Frontend Docker configuration
+│
+│── docker-compose.yml       # Docker setup for backend & frontend
+│── nginx/                   # Nginx configuration for production deployment
+│   ├── nginx.conf           # Nginx config file
+│── README.md                # Documentation
