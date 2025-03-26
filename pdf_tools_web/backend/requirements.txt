@@ -1,0 +1,11 @@
+Django==4.2  # Use latest stable version
+djangorestframework==3.14.0  # API framework
+PyPDF2==3.0.1  # PDF manipulation (split, merge)
+pdf2docx==0.5.6  # Convert PDF to Word
+python-docx==0.8.11  # Convert Word to PDF
+Pillow==10.1.0  # Image processing (JPG, PNG, HEIF)
+pypdfium2==4.24.0  # Advanced PDF editing (rotation, reordering, filters)
+drf-yasg==1.21.5  # API documentation (Swagger)
+django-cors-headers==4.2.0  # Enable CORS for frontend
+gunicorn==21.2.0  # Production WSGI server
+whitenoise==6.6.0  # Serve static files in production
