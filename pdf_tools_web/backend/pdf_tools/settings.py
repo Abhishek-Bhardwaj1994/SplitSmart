@@ -58,3 +58,5 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',  # ✅ Required for admin
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+SECRET_KEY = '5=v_!#xnql)@ggphu1_k_i$n!)$_sjrgclc(52emgwf0m-!t+('
