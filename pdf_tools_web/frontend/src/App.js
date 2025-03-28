@@ -18,6 +18,8 @@ function App() {
         <Route path="/merge-pdf" element={<MergePDF />} />
         <Route path="/split-pdf" element={<SplitPDF />} />
         <Route path="/convert-pdf" element={<ConvertPDF />} />
+        <Route path="/pdf-to-word" element={<ConvertPDF />} />
+        <Route path="/word-to-pdf" element={<ConvertPDF />} />
         <Route path="/edit-pdf" element={<EditPDF />} />
         <Route path="/image-pdf" element={<ImageToPDF />} />
         <Route path="/pdf-image" element={<PDFToImage />} />

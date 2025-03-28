@@ -30,7 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',             # ✅ Django REST framework (API support)
-    'pdf_processing',             # ✅ Our custom app
+    'pdf_processing', 
+    "corsheaders",            # ✅ Our custom app
 ]
 
 TEMPLATES = [
@@ -57,6 +58,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',  # ✅ Required for admin
     'django.contrib.messages.middleware.MessageMiddleware',  # ✅ Required for admin
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 SECRET_KEY = '5=v_!#xnql)@ggphu1_k_i$n!)$_sjrgclc(52emgwf0m-!t+('
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
