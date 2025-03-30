@@ -4,20 +4,29 @@
 # RUN pip install -r requirements.txt
 # CMD ["gunicorn", "pdf_tools.wsgi"]
 
+# Use Python Image
 FROM python:3.9
 
-# Set working directory
+# Set Working Directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y poppler-utils libreoffice
+# Install System Dependencies for LibreOffice & Poppler
+RUN apt-get update && apt-get install -y \
+    libreoffice \
+    poppler-utils \
+    && apt-get clean
 
-# Copy project files
+# Copy Project Files
 COPY . .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python Dependencies
+RUN pip install -r requirements.txt
 
-# Start the application
-CMD ["gunicorn", "pdf_tools.wsgi"]
+# Expose Necessary Ports (if needed)
+EXPOSE 8000
 
+# Set Environment Variable for LibreOffice
+ENV LIBREOFFICE_PATH="soffice"
+
+# Start Django Server (or Gunicorn in Production)
+CMD ["gunicorn", "pdf_tools.wsgi:application", "--bind", "0.0.0.0:8000"]
