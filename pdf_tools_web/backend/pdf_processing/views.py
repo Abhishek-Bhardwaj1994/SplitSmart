@@ -10,6 +10,7 @@ import uuid
 from pillow_heif import register_heif_opener
 import shutil
 import time
+import tempfile
 
 # ✅ Save uploaded file in 'media/tmp/'
 # Register HEIF/HEIC support
@@ -51,10 +52,16 @@ def move_to_downloads(file_path, original_name, extension):
 from django.http import FileResponse
 
 def get_file_response(file_path):
-    """Return a FileResponse while ensuring the file is properly closed."""
+    """Return a FileResponse while ensuring the file is properly closed before deletion."""
     try:
-        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=os.path.basename(file_path))
+        temp_file = tempfile.NamedTemporaryFile(delete=False)  # Don't delete immediately
+        with open(file_path, 'rb') as f:
+            temp_file.write(f.read())  # Copy file contents
+        temp_file.close()  # Close so FileResponse can access it
+
+        response = FileResponse(open(temp_file.name, 'rb'), as_attachment=True, filename=os.path.basename(file_path))
         response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+
         return response
     except Exception as e:
         print(f"Error returning file {file_path}: {e}")
@@ -134,17 +141,39 @@ def convert_pdf_to_word_view(request):
     output_file = None
 
     try:
-        output_file = pdf_to_word(file)
+        output_file = pdf_to_word(file)  # Convert PDF to Word
         original_name = os.path.splitext(request.FILES['file'].name)[0]
         output_file = move_to_downloads(output_file, original_name, ".docx")
-        return FileResponse(open(output_file, 'rb'), as_attachment=True)
+
+        # ✅ Check if the output file exists before returning it
+        if not os.path.exists(output_file):
+            print(f"❌ Output file not found: {output_file}")
+            return Response({'error': 'Conversion failed: Output file not found'}, status=500)
+
+        print(f"✅ Output file ready at: {output_file}")
+
+        # ✅ Return FileResponse with correct content-type
+        # response = FileResponse(
+        #     open(output_file, 'rb'),
+        #     as_attachment=True,
+        #     filename=os.path.basename(output_file),
+        #     content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        # )
+        response = get_file_response(output_file)
+        if response:
+
+        # ✅ Delay deletion to ensure file is properly sent
+            time.sleep(2)  # Ensure the file is not locked before deletion
+            delete_temp_file(output_file)
+
+        return response
+
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
     finally:
-        delete_temp_file(file)
-        response = get_file_response(output_file)
-        delete_temp_file(output_file)  # Now it will delete after response is sent
-        return response
+        delete_temp_file(file)  # Delete input PDF immediately
+
 
 # ✅ Convert Word to PDF
 @api_view(['POST'])
@@ -156,13 +185,18 @@ def convert_word_to_pdf_view(request):
         output_file = word_to_pdf(file)
         original_name = os.path.splitext(request.FILES['file'].name)[0]
         output_file = move_to_downloads(output_file, original_name, ".pdf")
-        return FileResponse(open(output_file, 'rb'), as_attachment=True)
+        # return FileResponse(open(output_file, 'rb'), as_attachment=True)
+        response = get_file_response(output_file)
+        if response:
+            time.sleep(2)  # Small delay to avoid file lock
+            delete_temp_file(output_file)
+        return response
     except Exception as e:
         return Response({'error': str(e)}, status=500)
     finally:
-        response = get_file_response(output_file)
-        delete_temp_file(output_file)  # Now it will delete after response is sent
-        return response
+        # response = get_file_response(output_file)
+        delete_temp_file(file)  # Now it will delete after response is sent
+        # return response
 
 # ✅ Convert Image to PDF
 @api_view(['POST'])

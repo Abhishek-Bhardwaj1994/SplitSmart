@@ -63,16 +63,23 @@ def split_pdf(file):
 
 # ✅ Convert PDF to Word (Improved)
 def pdf_to_word(pdf_file):
+    if not os.path.exists(pdf_file):
+        raise RuntimeError(f"File not found: {pdf_file}")
+
     output_docx = get_output_path(pdf_file, ".docx")
     doc = Document()
 
-    try:
-        text = ""
-        pdf_reader = fitz.open(pdf_file)
-        for page in pdf_reader:
-            text += page.get_text("text") + "\n\n"
+    text = ""
 
+    try:
+        # Open PDF and extract text
+        with fitz.open(pdf_file) as pdf_reader:
+            for page in pdf_reader:
+                text += page.get_text("text") + "\n\n"
+
+        # If no text found, use OCR
         if not text.strip():
+            print("No text found, running OCR...")
             images = convert_from_path(pdf_file)
             for image in images:
                 text += pytesseract.image_to_string(image) + "\n\n"
@@ -80,8 +87,10 @@ def pdf_to_word(pdf_file):
         if not text.strip():
             raise RuntimeError("No text extracted from PDF!")
 
+        print(f"Extracted text:\n{text[:500]}")  # Debugging
         doc.add_paragraph(text)
         doc.save(output_docx)
+
     except Exception as e:
         raise RuntimeError(f"PDF to Word conversion failed: {str(e)}")
 

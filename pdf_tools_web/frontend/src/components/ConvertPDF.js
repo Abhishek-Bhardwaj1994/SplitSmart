@@ -21,27 +21,42 @@ const ConvertPDF = () => {
 
   useEffect(() => {
     navigate(`/${conversionType}`);
+    setMessage("");  // Clear success/error message when switching conversion types
+    setConvertedFile(null); // Also clear the converted file preview
   }, [conversionType, navigate]);
+  
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
-    setConvertedFile(null);
+    setConvertedFile(null);  // Clear previous converted file
+    setMessage("");  // Reset message when selecting a new file
   };
+  
 
   const handleConvert = async () => {
     if (!file) return alert("Please upload a file!");
   
     setLoading(true);
+    setConvertedFile(null); // Ensure we clear any previous file
+    setMessage(""); // Reset message before conversion
+  
     const formData = new FormData();
     formData.append("file", file);
   
     const endpoint = conversionType === "pdf-to-word" ? "/pdf-to-word/" : "/word-to-pdf/";
+    const fileType =
+      conversionType === "pdf-to-word"
+        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        : "application/pdf";
   
     try {
       const response = await axios.post(endpoint, formData, { responseType: "blob" });
   
-      // Ensure it's a valid PDF file
-      const fileBlob = new Blob([response.data], { type: "application/pdf" });
+      if (response.status !== 200) {
+        throw new Error("Failed to convert file. Please try again.");
+      }
+  
+      const fileBlob = new Blob([response.data], { type: fileType });
       const fileURL = URL.createObjectURL(fileBlob);
   
       setConvertedFile(fileURL);
@@ -53,6 +68,8 @@ const ConvertPDF = () => {
       setLoading(false);
     }
   };
+  
+  
   
 
   const handleDownload = () => {
@@ -96,19 +113,27 @@ const ConvertPDF = () => {
       {convertedFile && (
   <>
     <Typography variant="h6">Preview:</Typography>
-    <iframe
-      title="Converted File Preview"
-      src={convertedFile}
-      width="100%"
-      height="500px"
-      type="application/pdf"
-    ></iframe>
+
+    {conversionType === "word-to-pdf" ? (
+      <iframe
+        title="Converted PDF Preview"
+        src={convertedFile}
+        width="100%"
+        height="500px"
+        type="application/pdf"
+      ></iframe>
+    ) : (
+      <Typography variant="body1">
+        Word document converted successfully. Click "Download" to view it.
+      </Typography>
+    )}
 
     <Button variant="contained" color="secondary" onClick={handleDownload}>
       Download
     </Button>
   </>
 )}
+
 
 
       {/* Feedback Message */}
