@@ -28,19 +28,25 @@ def get_output_path(original_path, ext):
 
 # ✅ Merge PDFs
 def merge_pdfs(file_paths):
-    output_file = get_output_path("merged.pdf", ".pdf")
-    merger = PdfMerger()
+    """Merge multiple PDFs into one and return the final file path."""
+    if not file_paths or len(file_paths) < 2:
+        raise ValueError("At least two PDFs are required for merging.")
     
+    
+
+    temp_output = get_output_path("merged", ".pdf")
+    merger = PdfMerger()
+
     try:
         for file in file_paths:
             merger.append(file)
-        merger.write(output_file)
+        merger.write(temp_output)
     except Exception as e:
         raise RuntimeError(f"PDF Merge failed: {str(e)}")
     finally:
         merger.close()
 
-    return output_file
+    return temp_output
 
 
 # ✅ Split PDF

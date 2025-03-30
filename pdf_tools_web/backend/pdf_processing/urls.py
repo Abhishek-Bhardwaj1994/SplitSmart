@@ -5,7 +5,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('merge/', merge_pdfs_view),
+    path('merge-pdf/', merge_pdfs_view),
     path('split/', split_pdf_view),
     path('pdf-to-word/', convert_pdf_to_word_view),
     path('word-to-pdf/', convert_word_to_pdf_view),

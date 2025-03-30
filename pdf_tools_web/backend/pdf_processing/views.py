@@ -90,20 +90,48 @@ def delete_temp_file(file_path, retries=5, delay=3):
 # ✅ Merge PDFs
 @api_view(['POST'])
 def merge_pdfs_view(request):
+    print(request.FILES)  # Debugging
     file_paths = [save_temp_file(f) for f in request.FILES.getlist('files')]
+    print("Saved file paths:", file_paths)  # Debugging
+
+    if len(file_paths) == 1:
+        delete_temp_file(file_paths[0])
+        return Response({"error": "At least two PDFs are required for merging."}, status=400)
+
+    if not file_paths:
+        return Response({"error": "No files provided for merging."}, status=400)
+
     output_file = None
+    temp_copy = None
 
     try:
         output_file = merge_pdfs(file_paths)
+        print("Merged PDF path:", output_file)  # Debugging
+
         original_name = "merged"
         output_file = move_to_downloads(output_file, original_name, ".pdf")
-        return FileResponse(open(output_file, 'rb'), as_attachment=True)
+
+        # ✅ Create a temporary copy for serving
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_copy:
+            shutil.copy(output_file, temp_copy.name)
+            print("Temporary copy created at:", temp_copy.name)  # Debugging
+
+        response = FileResponse(open(temp_copy.name, 'rb'), as_attachment=True, filename=os.path.basename(output_file))
+
+        # ✅ Delete merged file from downloads after a short delay
+        time.sleep(2)
+        delete_temp_file(output_file)
+
+        return response
+
     except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        return Response({"error": str(e)}, status=500)
+
     finally:
+        # ✅ Delete temporary uploaded PDFs
         for file in file_paths:
             delete_temp_file(file)
-        delete_temp_file(output_file)
+
 
 # ✅ Split PDF
 @api_view(['POST'])
