@@ -25,15 +25,26 @@ const SplitPDF = () => {
   const handleSplit = async () => {
     if (!file) return alert("❌ Please select a PDF file.");
     if (!pages.trim()) return alert("❌ Enter pages based on selected mode.");
-
+  
+    // ✅ Validate input based on split mode
+    const rangePattern = /^\d+-\d+$/;  // Matches "1-3"
+    const specificPattern = /^\d+(,\d+)*$/;  // Matches "1,3,4,5"
+  
+    if (splitMode === "range" && !rangePattern.test(pages)) {
+      return alert("❌ Invalid format! Use range format like '1-3'.");
+    }
+    if (splitMode === "specific" && !specificPattern.test(pages)) {
+      return alert("❌ Invalid format! Use comma-separated values like '1,3,5'.");
+    }
+  
     const formData = new FormData();
     formData.append("file", file);
     formData.append("pages", pages);
     formData.append("mode", splitMode); // Pass the selected mode to backend
-
+  
     try {
       const response = await axios.post("/split-pdf/", formData, { responseType: "blob" });
-
+  
       // ✅ Extract filename from Content-Disposition
       const contentDisposition = response.headers["content-disposition"];
       let fileName = "split";
@@ -41,17 +52,18 @@ const SplitPDF = () => {
         const match = contentDisposition.match(/filename="(.+?)"/);
         if (match) fileName = match[1];
       }
-
+  
       const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
       setSplitPreviewUrl(url);
       setSplitFileName(fileName);
       setSuccessMessage(`✅ PDF split successfully! Preview and download: ${fileName}`);
-
+  
     } catch (error) {
       console.error("Error splitting PDF:", error);
       setSuccessMessage("❌ Something went wrong. Please try again.");
     }
   };
+  
 
   const handleDownload = () => {
     if (!splitPreviewUrl) return;
