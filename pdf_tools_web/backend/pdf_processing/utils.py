@@ -139,10 +139,15 @@ def image_to_pdf(image_file):
     output_pdf = get_output_path(image_file, ".pdf")
     try:
         img = Image.open(image_file)
-        img.convert("RGB").save(output_pdf)
+        img = img.convert("RGB")
+        
+        # Optimize PDF: Reduce DPI and use quality settings
+        img.save(output_pdf, "PDF", resolution=100, quality=85)
+        
     except Exception as e:
         raise RuntimeError(f"Image to PDF conversion failed: {str(e)}")
     return output_pdf
+
 
 
 # ✅ Convert PDF to Image (Supports JPG, PNG, HEIF)

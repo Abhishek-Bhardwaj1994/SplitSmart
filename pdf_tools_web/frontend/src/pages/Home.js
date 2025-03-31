@@ -11,8 +11,8 @@ const tools = [
   { title: "Merge PDFs", path: "/merge-pdf", icon: <PictureAsPdf fontSize="large" /> },
   { title: "Split PDF", path: "/split-pdf", icon: <HorizontalSplit fontSize="large" /> },
   { title: "Convert PDF", path: "/convert-pdf", icon: <SwapHoriz fontSize="large" /> },
-  { title: "Image to PDF", path: "/image-pdf", icon: <Image fontSize="large" /> },
-  { title: "PDF to Image", path: "/pdf-image", icon: <PictureAsPdf fontSize="large" /> },
+  { title: "Image to PDF", path: "/heif-jpg-image-to-pdf", icon: <Image fontSize="large" /> },
+  { title: "PDF to Image", path: "/pdf-to-heif-jpg-image", icon: <PictureAsPdf fontSize="large" /> },
 ];
 
 const Home = () => {

@@ -192,25 +192,44 @@ def convert_word_to_pdf_view(request):
 # ✅ Convert Image to PDF
 @api_view(['POST'])
 def convert_image_to_pdf_view(request):
-    file = save_temp_file(request.FILES['file'])
+    """Converts JPG, PNG, JFIF, HEIF, HEIC to PDF."""
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
+
+    # ✅ Save file to `media/tmp`
+    temp_file = save_temp_file(request.FILES['file'])
     output_file = None
 
     try:
-        # Ensure HEIF/HEIC support
-        img = Image.open(file)
-        if img.format in ['HEIF', 'HEIC']:
+        # ✅ Open image & ensure RGB format for JFIF, HEIF, HEIC
+        img = Image.open(temp_file)
+        if img.format in ['HEIF', 'HEIC', 'JFIF']:  # JFIF is now included!
             img = img.convert("RGB")
-        
-        output_file = image_to_pdf(file)
-        original_name = os.path.splitext(request.FILES['file'].name)[0]  # Extract filename without extension
-        unique_id = uuid.uuid4().hex[:6]  # Generate unique ID
-        return FileResponse(open(output_file, 'rb'), as_attachment=True, filename=f'{original_name}_{unique_id}.pdf')
+
+        # ✅ Convert to PDF and save in `downloads`
+        output_file = image_to_pdf(temp_file)
+        original_name = os.path.splitext(request.FILES['file'].name)[0]
+        unique_id = uuid.uuid4().hex[:6]
+
+        return FileResponse(
+            open(output_file, 'rb'),
+            as_attachment=True,
+            filename=f'{original_name}_{unique_id}.pdf'
+        )
+
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
     finally:
-        delete_temp_file(file)
-        if output_file:
-            delete_temp_file(output_file)
+        # ✅ Delete both temp & output files after response
+        threading.Thread(target=cleanup_files, args=(temp_file, output_file)).start()
+
+
+def cleanup_files(temp_file, output_file):
+    """Deletes temporary and output files after processing."""
+    delete_temp_file(temp_file)
+    if output_file:
+        delete_temp_file(output_file)
 
 # ✅ Convert PDF to Images
 @api_view(['POST'])

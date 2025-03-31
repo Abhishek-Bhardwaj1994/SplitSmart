@@ -20,7 +20,7 @@ const PDFToImage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("/pdf-to-image", formData, { responseType: "blob" });
+      const response = await axios.post("/pdf-to-heif-jpg-image/", formData, { responseType: "blob" });
 
       // Detect if response is a ZIP file (for multi-page PDFs)
       const contentType = response.headers["content-type"];

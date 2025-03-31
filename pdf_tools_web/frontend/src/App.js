@@ -21,8 +21,8 @@ function App() {
         <Route path="/pdf-to-word" element={<ConvertPDF />} />
         <Route path="/word-to-pdf" element={<ConvertPDF />} />
         <Route path="/edit-pdf" element={<EditPDF />} />
-        <Route path="/image-pdf" element={<ImageToPDF />} />
-        <Route path="/pdf-image" element={<PDFToImage />} />
+        <Route path="/heif-jpg-image-to-pdf" element={<ImageToPDF />} />
+        <Route path="/pdf-to-heif-jpg-image" element={<PDFToImage />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </Router>

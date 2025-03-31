@@ -9,6 +9,6 @@ urlpatterns = [
     path('split-pdf/', split_pdf_view),
     path('pdf-to-word/', convert_pdf_to_word_view),
     path('word-to-pdf/', convert_word_to_pdf_view),
-    path('image-to-pdf/', convert_image_to_pdf_view),
-    path('pdf-to-image/', convert_pdf_to_image_view),
+    path('heif-jpg-image-to-pdf/', convert_image_to_pdf_view),
+    path('pdf-to-heif-jpg-image/', convert_pdf_to_image_view),
 ]
