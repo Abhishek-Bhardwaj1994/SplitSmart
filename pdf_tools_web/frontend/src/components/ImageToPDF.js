@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 const ImageToPDF = () => {
   const [files, setFiles] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [imageFormat, setImageFormat] = useState("jpg"); // Default format: JPG
+  const [imageFormat, setImageFormat] = useState("jpg"); // Default format: JPG/JPEG
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -14,10 +14,17 @@ const ImageToPDF = () => {
     const selectedFiles = e.target.files;
     if (!selectedFiles.length) return;
 
-    // ✅ Validate file type based on selected format
+    const allowedExtensions = {
+      jpg: ["jpg", "jpeg"], // ✅ JPG & JPEG handled together
+      png: ["png"],
+      heif: ["heif"],
+      heic: ["heic"],
+      jfif: ["jfif"],
+    };
+
     for (let file of selectedFiles) {
-      const fileType = file.type.split("/")[1]; // Extract format (e.g., "jpeg" from "image/jpeg")
-      if (!["jpeg", "jpg", "png", "heif", "heic", "jfif"].includes(fileType) || fileType !== imageFormat) {
+      const fileExtension = file.name.split(".").pop().toLowerCase(); // Get file extension
+      if (!allowedExtensions[imageFormat].includes(fileExtension)) {
         setErrorMessage(`❌ Only ${imageFormat.toUpperCase()} files are allowed!`);
         return;
       }
@@ -50,7 +57,7 @@ const ImageToPDF = () => {
     formData.append("format", "pdf"); // Always convert to PDF
 
     try {
-      const response = await axios.post("/convert-image/", formData, { responseType: "blob" });
+      const response = await axios.post("/heif-jpg-image-to-pdf/", formData, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([response.data]));
 
       setPreviewUrl(url);
@@ -86,11 +93,11 @@ const ImageToPDF = () => {
       <FormControl component="fieldset" style={{ marginTop: "15px" }}>
         <Typography variant="h6">Select Image Format</Typography>
         <RadioGroup row value={imageFormat} onChange={handleFormatChange}>
-          <FormControlLabel value="jpg" control={<Radio />} label="JPG" />
+          <FormControlLabel value="jpg" control={<Radio />} label="JPG / JPEG" /> {/* ✅ Merged JPG & JPEG */}
           <FormControlLabel value="png" control={<Radio />} label="PNG" />
           <FormControlLabel value="heif" control={<Radio />} label="HEIF" />
           <FormControlLabel value="heic" control={<Radio />} label="HEIC" />
-          <FormControlLabel value="jfif" control={<Radio />} label="JFIF" /> {/* ✅ JFIF Added */}
+          <FormControlLabel value="jfif" control={<Radio />} label="JFIF" />
         </RadioGroup>
       </FormControl>
 

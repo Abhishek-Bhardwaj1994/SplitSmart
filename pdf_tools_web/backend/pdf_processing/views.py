@@ -8,7 +8,9 @@ from rest_framework.response import Response
 from django.http import FileResponse
 from .utils import merge_pdfs, split_pdf, pdf_to_word, word_to_pdf, image_to_pdf, pdf_to_image
 import uuid
+from PIL import Image
 from pillow_heif import register_heif_opener
+import pillow_heif
 import shutil
 import time
 import tempfile
@@ -192,47 +194,50 @@ def convert_word_to_pdf_view(request):
 # ✅ Convert Image to PDF
 @api_view(['POST'])
 def convert_image_to_pdf_view(request):
-    """Converts JPG, PNG, JFIF, HEIF, HEIC to PDF."""
+    """Converts JPG, JPEG, PNG, JFIF, HEIF, HEIC to a single PDF."""
+    
     if 'file' not in request.FILES:
         return Response({"error": "No file uploaded"}, status=400)
 
-    # ✅ Save file to `media/tmp`
-    temp_file = save_temp_file(request.FILES['file'])
-    output_file = None
+    file = save_temp_file(request.FILES['file'])  # Save temp file
+    output_file = None  # Placeholder for output PDF
 
     try:
-        # ✅ Open image & ensure RGB format for JFIF, HEIF, HEIC
-        img = Image.open(temp_file)
-        if img.format in ['HEIF', 'HEIC', 'JFIF']:  # JFIF is now included!
+        # ✅ Open image
+        img = Image.open(file)
+
+        # ✅ Convert non-RGB images (JFIF, HEIF, HEIC) to RGB
+        if img.mode != "RGB":
             img = img.convert("RGB")
 
-        # ✅ Convert to PDF and save in `downloads`
-        output_file = image_to_pdf(temp_file)
+        # ✅ Generate unique output filename
+        output_file = image_to_pdf(file)
         original_name = os.path.splitext(request.FILES['file'].name)[0]
         unique_id = uuid.uuid4().hex[:6]
+        output_file = move_to_downloads(output_file, original_name, ".pdf")
+
+        # ✅ Convert image to PDF and save
+        img.save(output_file, "PDF")
 
         return FileResponse(
             open(output_file, 'rb'),
             as_attachment=True,
-            filename=f'{original_name}_{unique_id}.pdf'
+            filename=os.path.basename(output_file)
         )
 
     except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        return Response({'error': f"Conversion failed: {str(e)}"}, status=500)
 
     finally:
-        # ✅ Delete both temp & output files after response
-        threading.Thread(target=cleanup_files, args=(temp_file, output_file)).start()
+        # ✅ Cleanup temp & output files after response
+        threading.Thread(target=lambda: (
+            delete_temp_file(file),
+            delete_temp_file(output_file) if output_file else None
+        )).start()
 
-
-def cleanup_files(temp_file, output_file):
-    """Deletes temporary and output files after processing."""
-    delete_temp_file(temp_file)
-    if output_file:
-        delete_temp_file(output_file)
 
 # ✅ Convert PDF to Images
-@api_view(['POST'])
+
 @api_view(['POST'])
 def convert_pdf_to_image_view(request):
     file = save_temp_file(request.FILES['file'])
