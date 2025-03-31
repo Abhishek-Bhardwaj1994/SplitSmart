@@ -2,6 +2,7 @@ import os
 import zipfile
 from django.conf import settings
 from django.core.files.storage import default_storage
+from PyPDF2 import PdfReader, PdfWriter
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import FileResponse
@@ -11,81 +12,14 @@ from pillow_heif import register_heif_opener
 import shutil
 import time
 import tempfile
+from .commonutils import parse_page_range, delete_temp_file, save_temp_file, move_to_downloads, get_file_response
 
 # ✅ Save uploaded file in 'media/tmp/'
 # Register HEIF/HEIC support
 register_heif_opener()
 
 # ✅ Save uploaded file in 'media/tmp/'
-def save_temp_file(uploaded_file):
-    """Save uploaded file temporarily with a unique name and return the absolute file path."""
-    temp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp')
-    os.makedirs(temp_dir, exist_ok=True)  # Ensure 'tmp' directory exists
-    
-    original_name, ext = os.path.splitext(uploaded_file.name)  # Extract name and extension
-    unique_id = uuid.uuid4().hex[:6]  # Generate unique ID
-    
-    file_name = f"{original_name}_{unique_id}{ext}"  # Append unique ID
-    file_path = os.path.join(temp_dir, file_name)
-    
-    with open(file_path, 'wb+') as destination:
-        for chunk in uploaded_file.chunks():
-            destination.write(chunk)
-    
-    return file_path
 
-
-
-
-# ✅ Move output file to 'downloads/'
-def move_to_downloads(file_path, original_name, extension):
-    """Move processed file to 'downloads/' directory and return new path."""
-    downloads_dir = os.path.join(settings.MEDIA_ROOT, 'downloads')
-    os.makedirs(downloads_dir, exist_ok=True)  # Ensure 'downloads' directory exists
-    
-    unique_id = uuid.uuid4().hex[:6]
-    new_file_path = os.path.join(downloads_dir, f"{original_name}_{unique_id}{extension}")
-    shutil.move(file_path, new_file_path)
-    
-    return new_file_path
-
-from django.http import FileResponse
-
-def get_file_response(file_path):
-    """Return a FileResponse while ensuring the file is properly closed before deletion."""
-    try:
-        temp_file = tempfile.NamedTemporaryFile(delete=False)  # Don't delete immediately
-        with open(file_path, 'rb') as f:
-            temp_file.write(f.read())  # Copy file contents
-        temp_file.close()  # Close so FileResponse can access it
-
-        response = FileResponse(open(temp_file.name, 'rb'), as_attachment=True, filename=os.path.basename(file_path))
-        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-
-        return response
-    except Exception as e:
-        print(f"Error returning file {file_path}: {e}")
-        return None
-
-
-# ✅ Delete temporary files
-# ✅ Delete temporary files
-def delete_temp_file(file_path, retries=5, delay=3):
-    """Delete the temporary file after processing, retrying if it's locked."""
-    try:
-        if file_path and os.path.exists(file_path):
-            for attempt in range(retries):
-                try:
-                    os.remove(file_path)
-                    print(f"Deleted file: {file_path}")
-                    return  # Exit if successful
-                except PermissionError:
-                    print(f"Attempt {attempt+1}: File is locked, retrying in {delay} seconds...")
-                    time.sleep(delay)  # Wait before retrying
-
-            print(f"Failed to delete file after {retries} attempts: {file_path}")
-    except Exception as e:
-        print(f"Error deleting file {file_path}: {e}")
 
 # ✅ Merge PDFs
 @api_view(['POST'])
@@ -136,31 +70,67 @@ def merge_pdfs_view(request):
 # ✅ Split PDF
 @api_view(['POST'])
 def split_pdf_view(request):
+    """Splits a PDF into selected pages or multiple single-page PDFs."""
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
+
     file = save_temp_file(request.FILES['file'])
     output_files = []
 
     try:
-        output_files = split_pdf(file)
-        if not output_files:
-            return Response({'error': 'No pages extracted!'}, status=500)
-        
+        reader = PdfReader(file)
+        total_pages = len(reader.pages)
+
+        # ✅ Get optional page range from request
+        page_range = request.data.get('pages', '')  # Example: "1-3,5"
+        selected_pages = parse_page_range(page_range, total_pages) if page_range else list(range(total_pages))
+
+        if not selected_pages:
+            return Response({'error': 'Invalid page range!'}, status=400)
+
         original_name = os.path.splitext(request.FILES['file'].name)[0]
+
+        # ✅ Extract selected pages
+        for i, page_num in enumerate(selected_pages):
+            writer = PdfWriter()
+            writer.add_page(reader.pages[page_num])
+
+            output_file = move_to_downloads(
+                os.path.join(tempfile.gettempdir(), f"{original_name}_page{page_num+1}.pdf"),
+                original_name,
+                ".pdf"
+            )
+
+            with open(output_file, "wb") as f:
+                writer.write(f)
+            
+            output_files.append(output_file)
+
+        # ✅ If one file, return it directly
         if len(output_files) == 1:
-            output_files[0] = move_to_downloads(output_files[0], original_name, ".pdf")
-            return FileResponse(open(output_files[0], 'rb'), as_attachment=True)
-        
-        zip_path = move_to_downloads(os.path.join(settings.MEDIA_ROOT, 'tmp', f"{original_name}.zip"), original_name, ".zip")
+            return FileResponse(open(output_files[0], 'rb'), as_attachment=True, filename=os.path.basename(output_files[0]))
+
+        # ✅ If multiple files, create a ZIP archive
+        unique_id = uuid.uuid4().hex[:6]
+        zip_name = f"{original_name}_selected_{unique_id}.zip"
+        zip_path = os.path.join(tempfile.gettempdir(), zip_name)
+
         with zipfile.ZipFile(zip_path, 'w') as zipf:
             for pdf in output_files:
                 zipf.write(pdf, os.path.basename(pdf))
-        
-        return FileResponse(open(zip_path, 'rb'), as_attachment=True)
+
+        final_zip_path = move_to_downloads(zip_path, original_name, ".zip")
+        return FileResponse(open(final_zip_path, 'rb'), as_attachment=True, filename=os.path.basename(final_zip_path))
+
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
     finally:
+        # ✅ Delete temp input file & split files
         delete_temp_file(file)
         for pdf in output_files:
             delete_temp_file(pdf)
+
 
 # ✅ Convert PDF to Word
 @api_view(['POST'])

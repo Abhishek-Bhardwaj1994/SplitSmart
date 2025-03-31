@@ -3,6 +3,7 @@ import { Button, Typography, Select, MenuItem } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../services/api";
 import { v4 as uuidv4 } from "uuid";
+import { Link } from "react-router-dom";
 
 const ConvertPDF = () => {
   const navigate = useNavigate();
@@ -89,6 +90,12 @@ const ConvertPDF = () => {
 
   return (
     <div>
+      {/* Home Button at the Top */}
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <Button variant="contained" color="secondary" style={{ marginBottom: "10px" }}>
+                Home
+              </Button>
+            </Link>
       <Typography variant="h4">Convert PDF / Word</Typography>
 
       {/* Conversion Type Selector */}

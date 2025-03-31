@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Typography, Alert } from "@mui/material";
 import axios from "../services/api";
 import { v4 as uuidv4 } from "uuid";
+import { Link } from "react-router-dom";
 
 const MergePDF = () => {
   const [files, setFiles] = useState(null);
@@ -31,7 +32,7 @@ const MergePDF = () => {
       // ✅ Extract filename from Content-Disposition
       const contentDisposition = response.headers["content-disposition"];
       let fileName = "merged";
-      if (contentDisposition) {
+      if (contentDisposition) { 
         const match = contentDisposition.match(/filename="(.+?)"/);
         if (match) fileName = match[1];
       }
@@ -59,6 +60,13 @@ const MergePDF = () => {
 
   return (
     <div>
+      {/* Home Button at the Top */}
+      <Link to="/" style={{ textDecoration: "none" }}>
+        <Button variant="contained" color="secondary" style={{ marginBottom: "10px" }}>
+          Home
+        </Button>
+      </Link>
+
       <Typography variant="h4">Merge PDFs</Typography>
       <input type="file" multiple accept="application/pdf" onChange={handleFileChange} />
 
@@ -90,5 +98,6 @@ const MergePDF = () => {
     </div>
   );
 };
+
 
 export default MergePDF;

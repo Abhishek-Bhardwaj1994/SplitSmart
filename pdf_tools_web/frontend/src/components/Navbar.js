@@ -9,6 +9,7 @@ const Navbar = () => {
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           PDF Tools
         </Typography>
+        <Button color="inherit" component={Link} to="/">Home</Button> {/* ✅ Added Home Button */}
         <Button color="inherit" component={Link} to="/merge">Merge PDF</Button>
         <Button color="inherit" component={Link} to="/split">Split PDF</Button>
         <Button color="inherit" component={Link} to="/convert">Convert PDF</Button>

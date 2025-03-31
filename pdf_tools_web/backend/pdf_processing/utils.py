@@ -50,17 +50,25 @@ def merge_pdfs(file_paths):
 
 
 # ✅ Split PDF
-def split_pdf(file):
+def split_pdf(file_path):
+    """Splits a PDF into individual pages and saves them in 'downloads'."""
     output_files = []
     try:
-        reader = PdfReader(file)
-        for i, page in enumerate(reader.pages):
+        reader = PdfReader(file_path)
+        for i, page in enumerate(reader.pages, start=1):  # Start from 1 for better naming
             writer = PdfWriter()
             writer.add_page(page)
-            output_file = get_output_path(file, f"_{i}.pdf")
+
+            output_file = get_output_path(file_path, i)
             with open(output_file, "wb") as f:
                 writer.write(f)
+
             output_files.append(output_file)
+
+        # ✅ Delete original file after splitting
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
     except Exception as e:
         raise RuntimeError(f"PDF Split failed: {str(e)}")
 
