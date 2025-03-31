@@ -12,6 +12,7 @@ from pillow_heif import register_heif_opener
 import shutil
 import time
 import tempfile
+import threading
 from .commonutils import parse_page_range, delete_temp_file, save_temp_file, move_to_downloads, get_file_response
 
 # ✅ Save uploaded file in 'media/tmp/'
@@ -70,19 +71,25 @@ def merge_pdfs_view(request):
 # ✅ Split PDF
 @api_view(['POST'])
 def split_pdf_view(request):
-    """Splits a PDF into selected pages or multiple single-page PDFs."""
+    """Splits a PDF into selected pages and returns a single PDF."""
     if 'file' not in request.FILES:
         return Response({"error": "No file uploaded"}, status=400)
 
-    file = save_temp_file(request.FILES['file'])
-    output_files = []
+    # ✅ Save uploaded file in `media/tmp`
+    temp_file = save_temp_file(request.FILES['file'])  
+    tmp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp')
+    os.makedirs(tmp_dir, exist_ok=True)  
+    
+    file_name = os.path.basename(temp_file)
+    tmp_file_path = os.path.join(tmp_dir, file_name)
+    os.replace(temp_file, tmp_file_path)  
 
     try:
-        reader = PdfReader(file)
+        reader = PdfReader(tmp_file_path)
         total_pages = len(reader.pages)
 
-        # ✅ Get optional page range from request
-        page_range = request.data.get('pages', '')  # Example: "1-3,5"
+        # ✅ Get page selection
+        page_range = request.data.get('pages', '')  
         selected_pages = parse_page_range(page_range, total_pages) if page_range else list(range(total_pages))
 
         if not selected_pages:
@@ -90,46 +97,32 @@ def split_pdf_view(request):
 
         original_name = os.path.splitext(request.FILES['file'].name)[0]
 
-        # ✅ Extract selected pages
-        for i, page_num in enumerate(selected_pages):
-            writer = PdfWriter()
+        # ✅ Create a single merged PDF with selected pages
+        downloads_dir = os.path.join(settings.MEDIA_ROOT, 'downloads')
+        os.makedirs(downloads_dir, exist_ok=True)  
+
+        unique_id = uuid.uuid4().hex[:6]
+        output_file = os.path.join(downloads_dir, f"{original_name}_selected_{unique_id}.pdf")
+
+        writer = PdfWriter()
+        for page_num in selected_pages:
             writer.add_page(reader.pages[page_num])
 
-            output_file = move_to_downloads(
-                os.path.join(tempfile.gettempdir(), f"{original_name}_page{page_num+1}.pdf"),
-                original_name,
-                ".pdf"
-            )
+        with open(output_file, "wb") as f:
+            writer.write(f)
 
-            with open(output_file, "wb") as f:
-                writer.write(f)
-            
-            output_files.append(output_file)
+        # ✅ Return the merged PDF and schedule deletion
+        response = FileResponse(open(output_file, 'rb'), as_attachment=True, filename=os.path.basename(output_file))
 
-        # ✅ If one file, return it directly
-        if len(output_files) == 1:
-            return FileResponse(open(output_files[0], 'rb'), as_attachment=True, filename=os.path.basename(output_files[0]))
+        # ✅ Cleanup files after response
+        threading.Thread(target=delete_temp_file, args=(tmp_file_path,)).start()  
+        threading.Thread(target=delete_temp_file, args=(output_file,)).start()
 
-        # ✅ If multiple files, create a ZIP archive
-        unique_id = uuid.uuid4().hex[:6]
-        zip_name = f"{original_name}_selected_{unique_id}.zip"
-        zip_path = os.path.join(tempfile.gettempdir(), zip_name)
-
-        with zipfile.ZipFile(zip_path, 'w') as zipf:
-            for pdf in output_files:
-                zipf.write(pdf, os.path.basename(pdf))
-
-        final_zip_path = move_to_downloads(zip_path, original_name, ".zip")
-        return FileResponse(open(final_zip_path, 'rb'), as_attachment=True, filename=os.path.basename(final_zip_path))
+        return response
 
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 
-    finally:
-        # ✅ Delete temp input file & split files
-        delete_temp_file(file)
-        for pdf in output_files:
-            delete_temp_file(pdf)
 
 
 # ✅ Convert PDF to Word

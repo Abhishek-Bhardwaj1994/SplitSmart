@@ -10,29 +10,30 @@ from django.core.files.storage import default_storage
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import FileResponse
+import time
 # from .utils import save_temp_file, move_to_downloads, delete_temp_file
 
 def parse_page_range(page_range, total_pages):
-    """Parses a page range string like '1-3,5' and returns a list of page numbers (zero-indexed)."""
-    pages = set()
+    """Converts a user input page range into zero-based page numbers."""
+    selected_pages = set()
 
     try:
         parts = page_range.split(',')
         for part in parts:
             if '-' in part:
                 start, end = map(int, part.split('-'))
-                if start > end or start < 1 or end > total_pages:
-                    raise ValueError("Invalid page range.")
-                pages.update(range(start, end + 1))
+                selected_pages.update(range(start - 1, end))  # Convert to zero-based
             else:
-                page = int(part)
-                if page < 1 or page > total_pages:
-                    raise ValueError("Invalid page number.")
-                pages.add(page)
+                selected_pages.add(int(part) - 1)  # Convert to zero-based
 
-        return sorted(p - 1 for p in pages)  # Convert to zero-indexed
+        # ✅ Ensure valid pages (inside range)
+        selected_pages = sorted(p for p in selected_pages if 0 <= p < total_pages)
+
     except ValueError:
-        return None
+        return []  # Invalid format
+
+    return selected_pages
+
 
 def save_temp_file(uploaded_file):
     """Save uploaded file temporarily with a unique name and return the absolute file path."""
@@ -59,6 +60,10 @@ def move_to_downloads(file_path, original_name, extension):
     """Move processed file to 'downloads/' directory and return new path."""
     downloads_dir = os.path.join(settings.MEDIA_ROOT, 'downloads')
     os.makedirs(downloads_dir, exist_ok=True)  # Ensure 'downloads' directory exists
+
+    for old_file in os.listdir(downloads_dir):
+        if old_file.startswith(original_name) and old_file.endswith(ext):
+            os.remove(os.path.join(downloads_dir, old_file))
     
     unique_id = uuid.uuid4().hex[:6]
     new_file_path = os.path.join(downloads_dir, f"{original_name}_{unique_id}{extension}")
