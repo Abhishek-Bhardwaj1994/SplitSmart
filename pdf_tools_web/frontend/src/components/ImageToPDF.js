@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { Button, Typography, Alert, FormControl, FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import axios from "../services/api";
 import { Link } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 const ImageToPDF = () => {
   const [files, setFiles] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [imageFormat, setImageFormat] = useState("jpg"); // Default format: JPG/JPEG
   const [successMessage, setSuccessMessage] = useState("");
+  const [mergedFileName, setMergedFileName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleFileChange = (e) => {
@@ -52,16 +54,29 @@ const ImageToPDF = () => {
 
     const formData = new FormData();
     for (let file of files) {
-      formData.append("images", file);
+      formData.append("files", file);
     }
     formData.append("format", "pdf"); // Always convert to PDF
 
     try {
-      const response = await axios.post("/heif-jpg-image-to-pdf/", formData, { responseType: "blob" });
+      const response = await axios.post("/heif-jpg-image-to-pdf/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },  // ✅ Ensure correct headers
+        responseType: "blob",  // ✅ Ensure response is treated as a file
+      });
+      
+
+      // ✅ Extract filename from Content-Disposition
+      const contentDisposition = response.headers["content-disposition"];
+      let fileName = "converted";
+      if (contentDisposition) { 
+        const match = contentDisposition.match(/filename="(.+?)"/);
+        if (match) fileName = match[1];
+      }
       const url = window.URL.createObjectURL(new Blob([response.data]));
 
       setPreviewUrl(url);
       setSuccessMessage(`✅ Conversion successful! Preview & Download your PDF.`);
+      setMergedFileName(fileName);
       setErrorMessage("");
     } catch (error) {
       console.error("Error converting images:", error);
@@ -71,9 +86,10 @@ const ImageToPDF = () => {
 
   const handleDownload = () => {
     if (!previewUrl) return;
+    const uniqueId = uuidv4().split("-")[0]
     const link = document.createElement("a");
     link.href = previewUrl;
-    link.setAttribute("download", "converted.pdf");
+    link.setAttribute("download", `${mergedFileName}_${uniqueId}.pdf`);
     document.body.appendChild(link);
     link.click();
   };

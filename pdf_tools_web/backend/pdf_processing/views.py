@@ -194,46 +194,45 @@ def convert_word_to_pdf_view(request):
 # ✅ Convert Image to PDF
 @api_view(['POST'])
 def convert_image_to_pdf_view(request):
-    """Converts JPG, JPEG, PNG, JFIF, HEIF, HEIC to a single PDF."""
+    """Converts multiple images (JPG, PNG, HEIF, HEIC) into a single merged PDF."""
     
-    if 'file' not in request.FILES:
-        return Response({"error": "No file uploaded"}, status=400)
+    files = request.FILES.getlist('files')  
+    if not files:
+        return Response({"error": "No files uploaded"}, status=400)
 
-    file = save_temp_file(request.FILES['file'])  # Save temp file
-    output_file = None  # Placeholder for output PDF
+    temp_files = []  # Track saved temp files
+    output_file = None
 
     try:
-        # ✅ Open image
-        img = Image.open(file)
+        # ✅ Save multiple images to temp folder
+        for img_file in request.FILES.getlist('files'):
+            temp_files.append(save_temp_file(img_file)) 
 
-        # ✅ Convert non-RGB images (JFIF, HEIF, HEIC) to RGB
-        if img.mode != "RGB":
-            img = img.convert("RGB")
+        if not temp_files:
+            return Response({"error": "No valid images found"}, status=400)
 
-        # ✅ Generate unique output filename
-        output_file = image_to_pdf(file)
-        original_name = os.path.splitext(request.FILES['file'].name)[0]
-        unique_id = uuid.uuid4().hex[:6]
-        output_file = move_to_downloads(output_file, original_name, ".pdf")
+        # ✅ Convert images to single PDF and move to downloads
+        output_file = image_to_pdf(temp_files)
 
-        # ✅ Convert image to PDF and save
-        img.save(output_file, "PDF")
-
-        return FileResponse(
+        response = FileResponse(
             open(output_file, 'rb'),
             as_attachment=True,
             filename=os.path.basename(output_file)
         )
 
+        time.sleep(2)
+        delete_temp_file(output_file)
+
+        return response
+
     except Exception as e:
         return Response({'error': f"Conversion failed: {str(e)}"}, status=500)
 
     finally:
-        # ✅ Cleanup temp & output files after response
-        threading.Thread(target=lambda: (
-            delete_temp_file(file),
-            delete_temp_file(output_file) if output_file else None
-        )).start()
+        # ✅ Cleanup temp files after response (run in background)
+        threading.Thread(target=lambda: [delete_temp_file(f) for f in temp_files]).start()
+
+        
 
 
 # ✅ Convert PDF to Images

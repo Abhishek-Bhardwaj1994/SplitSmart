@@ -6,6 +6,7 @@ from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from pdf2image import convert_from_path
 from docx import Document
 from PIL import Image
+# from PIL import 
 from pillow_heif import register_heif_opener  # HEIF Support
 from pathlib import Path
 import uuid
@@ -135,20 +136,30 @@ def word_to_pdf(word_file):
 
 
 # ✅ Convert Image to PDF (Supports JPG, PNG, HEIF)
-def image_to_pdf(image_file):
-    output_pdf = get_output_path(image_file, ".pdf")
+def image_to_pdf(image_files):
+    """Convert multiple images to a single PDF"""
+    output_pdf = get_output_path(image_files[0], ".pdf")
+    images = []
+
     try:
-        img = Image.open(image_file)
-        img = img.convert("RGB")
-        
-        # Optimize PDF: Reduce DPI and use quality settings
-        img.save(output_pdf, "PDF", resolution=100, quality=85)
-        
+        for image_file in image_files:
+            img = Image.open(image_file)
+            img = img.convert("RGB")  # Convert to RGB if not already
+
+            # ✅ Reduce image size (prevent large PDFs)
+            img.thumbnail((2000, 2000), Image.LANCZOS)
+            images.append(img)
+
+        if images:
+            # ✅ Save as a multi-page PDF
+            images[0].save(output_pdf, "PDF", save_all=True, append_images=images[1:])
+
     except Exception as e:
         raise RuntimeError(f"Image to PDF conversion failed: {str(e)}")
+
     return output_pdf
 
-
+    
 
 # ✅ Convert PDF to Image (Supports JPG, PNG, HEIF)
 def pdf_to_image(pdf_file, format="JPEG"):
