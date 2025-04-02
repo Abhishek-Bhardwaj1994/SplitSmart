@@ -46,43 +46,52 @@ const ImageToPDF = () => {
     setErrorMessage("");
   };
 
-  const handleConvert = async () => {
+  const [isConverting, setIsConverting] = useState(false); // ✅ Track conversion state
+
+const handleConvert = async () => {
     if (!files) {
-      setErrorMessage("❌ Please upload images before converting.");
-      return;
+        setErrorMessage("❌ Please upload images before converting.");
+        return;
     }
+
+    setIsConverting(true); // ✅ Set loading state
 
     const formData = new FormData();
     for (let file of files) {
-      formData.append("files", file);
+        formData.append("files", file);
     }
-    formData.append("format", "pdf"); // Always convert to PDF
 
     try {
-      const response = await axios.post("/heif-jpg-image-to-pdf/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },  // ✅ Ensure correct headers
-        responseType: "blob",  // ✅ Ensure response is treated as a file
-      });
-      
+        const response = await axios.post("/heif-jpg-image-to-pdf/", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+            responseType: "blob",  // ✅ Correctly handle binary file response
+        });
 
-      // ✅ Extract filename from Content-Disposition
-      const contentDisposition = response.headers["content-disposition"];
-      let fileName = "converted";
-      if (contentDisposition) { 
-        const match = contentDisposition.match(/filename="(.+?)"/);
-        if (match) fileName = match[1];
-      }
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+        // ✅ Create a downloadable blob URL
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
 
-      setPreviewUrl(url);
-      setSuccessMessage(`✅ Conversion successful! Preview & Download your PDF.`);
-      setMergedFileName(fileName);
-      setErrorMessage("");
+        // ✅ Extract filename from headers
+        const contentDisposition = response.headers["content-disposition"];
+        let fileName = "converted.pdf"; 
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="(.+?)"/);
+            if (match) fileName = match[1];
+        }
+
+        setPreviewUrl(url);
+        setSuccessMessage("✅ Conversion successful! Preview & Download your PDF.");
+        setMergedFileName(fileName);
+        setErrorMessage("");
     } catch (error) {
-      console.error("Error converting images:", error);
-      setErrorMessage("❌ Conversion failed. Please try again.");
+        console.error("Error converting images:", error);
+        setErrorMessage("❌ Conversion failed. Please try again.");
+    } finally {
+        setIsConverting(false); // ✅ Reset loading state
     }
-  };
+};
+
+
 
   const handleDownload = () => {
     if (!previewUrl) return;
@@ -125,25 +134,42 @@ const ImageToPDF = () => {
         style={{ marginTop: "10px" }}
       />
 
-      <Button variant="contained" color="primary" onClick={handleConvert} style={{ marginTop: "10px" }}>
-        Convert to PDF
-      </Button>
+<Button 
+  variant="contained" 
+  color="primary" 
+  onClick={handleConvert} 
+  style={{ marginTop: "10px" }} 
+  disabled={isConverting} // ✅ Disable button while converting
+>
+  {isConverting ? "Converting..." : "Convert to PDF"} {/* ✅ Change button text */}
+</Button>
 
       {errorMessage && <Alert severity="error" style={{ marginTop: "10px" }}>{errorMessage}</Alert>}
       {successMessage && <Alert severity="success" style={{ marginTop: "10px" }}>{successMessage}</Alert>}
 
       {/* Preview & Download */}
       {previewUrl && (
-        <div style={{ marginTop: "20px" }}>
-          <Typography variant="h6">Converted PDF Preview</Typography>
-          <iframe src={previewUrl} width="100%" height="500px" style={{ border: "1px solid #ccc", marginTop: "10px" }} title="Preview" />
-          <Button variant="contained" color="secondary" onClick={handleDownload} style={{ marginTop: "10px" }}>
+    <div style={{ marginTop: "20px" }}>
+        <Typography variant="h6">Converted PDF Preview</Typography>
+        <object 
+            data={previewUrl} 
+            type="application/pdf" 
+            width="100%" 
+            height="500px"
+            style={{ border: "1px solid #ccc", marginTop: "10px" }}
+        >
+            <p>Preview not supported. <a href={previewUrl} download>Download PDF</a></p>
+        </object>
+
+        <Button variant="contained" color="secondary" onClick={handleDownload} style={{ marginTop: "10px" }}>
             Download PDF
-          </Button>
-        </div>
-      )}
+        </Button>
+    </div>
+)}
+
     </div>
   );
-};
+}
+;
 
 export default ImageToPDF;

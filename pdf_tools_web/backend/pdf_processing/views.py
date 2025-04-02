@@ -231,6 +231,7 @@ def convert_image_to_pdf_view(request):
     finally:
         # ✅ Cleanup temp files after response (run in background)
         threading.Thread(target=lambda: [delete_temp_file(f) for f in temp_files]).start()
+        threading.Thread(target=delete_temp_file, args=(output_file,)).start()
 
         
 

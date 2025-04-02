@@ -5,7 +5,7 @@ import pytesseract  # OCR for PDF to Word conversion
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from pdf2image import convert_from_path
 from docx import Document
-from PIL import Image
+from PIL import Image,UnidentifiedImageError
 # from PIL import 
 from pillow_heif import register_heif_opener  # HEIF Support
 from pathlib import Path
@@ -17,7 +17,10 @@ import shutil
 register_heif_opener()
 
 # Get user's Downloads folder
-DOWNLOADS_DIR = str(Path.home() / "Downloads")
+# DOWNLOADS_DIR = str(Path.home() / "Downloads")
+DOWNLOADS_DIR = os.path.join("media", "downloads")
+os.makedirs(DOWNLOADS_DIR, exist_ok=True)
+
 
 # ✅ Generate output file path with '_changed' suffix
 def get_output_path(original_path, ext):
@@ -143,17 +146,19 @@ def image_to_pdf(image_files):
 
     try:
         for image_file in image_files:
-            img = Image.open(image_file)
-            img = img.convert("RGB")  # Convert to RGB if not already
+            try:
+                with open(image_file, "rb") as f:  # Open explicitly in binary mode
+                    img = Image.open(f)
+                    img.load()  # Ensure image is properly loaded before processing
 
-            # ✅ Reduce image size (prevent large PDFs)
-            img.thumbnail((2000, 2000), Image.LANCZOS)
-            images.append(img)
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+                images.append(img)
+            except UnidentifiedImageError:
+                raise RuntimeError(f"Invalid image file: {image_file}")
 
         if images:
-            # ✅ Save as a multi-page PDF
             images[0].save(output_pdf, "PDF", save_all=True, append_images=images[1:])
-
     except Exception as e:
         raise RuntimeError(f"Image to PDF conversion failed: {str(e)}")
 
