@@ -18,12 +18,13 @@ register_heif_opener()
 
 # Get user's Downloads folder
 # DOWNLOADS_DIR = str(Path.home() / "Downloads")
-DOWNLOADS_DIR = os.path.join("media", "downloads")
+DOWNLOADS_DIR = os.path.join("media", "output")
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 
 # ✅ Generate output file path with '_changed' suffix
 def get_output_path(original_path, ext):
+    # DOWNLOADS_DIR = str(Path.home() / "Downloads")
     """Generate unique filename and save in Downloads folder"""
     unique_id = uuid.uuid4().hex[:8]  # Generate a short unique ID
     filename = f"{Path(original_path).stem}_changed_{unique_id}{ext}"
@@ -39,16 +40,28 @@ def merge_pdfs(file_paths):
     
 
     temp_output = get_output_path("merged", ".pdf")
+    print(f"Temporary output path: {temp_output}")  # Debugging
+    temp_output = os.path.abspath(temp_output)
     merger = PdfMerger()
 
     try:
         for file in file_paths:
+            file = os.path.abspath(file)  # Ensure absolute path
+            if not os.path.exists(file):
+                raise FileNotFoundError(f"❌ File not found during merging: {file}")
             merger.append(file)
+
         merger.write(temp_output)
+        merger.close()
+        
+        # ✅ Debugging: Check if file exists
+        if os.path.exists(temp_output):
+            print(f"✅ Merged PDF successfully created at: {temp_output}")
+        else:
+            raise FileNotFoundError(f"❌ Merged PDF not created: {temp_output}")
+
     except Exception as e:
         raise RuntimeError(f"PDF Merge failed: {str(e)}")
-    finally:
-        merger.close()
 
     return temp_output
 

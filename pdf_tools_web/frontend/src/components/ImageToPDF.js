@@ -73,7 +73,7 @@ const handleConvert = async () => {
 
         // ✅ Extract filename from headers
         const contentDisposition = response.headers["content-disposition"];
-        let fileName = "converted.pdf"; 
+        let fileName = "converted"; 
         if (contentDisposition) {
             const match = contentDisposition.match(/filename="(.+?)"/);
             if (match) fileName = match[1];

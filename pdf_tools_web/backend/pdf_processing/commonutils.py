@@ -11,6 +11,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import FileResponse
 import time
+from django.utils.text import slugify
+from pathlib import Path
 # from .utils import save_temp_file, move_to_downloads, delete_temp_file
 
 def parse_page_range(page_range, total_pages):
@@ -39,17 +41,24 @@ def save_temp_file(uploaded_file):
     """Save uploaded file temporarily with a unique name and return the absolute file path."""
     temp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp')
     os.makedirs(temp_dir, exist_ok=True)  # Ensure 'tmp' directory exists
-    
-    original_name, ext = os.path.splitext(uploaded_file.name)  # Extract name and extension
-    unique_id = uuid.uuid4().hex[:6]  # Generate unique ID
-    
-    file_name = f"{original_name}_{unique_id}{ext}"  # Append unique ID
+
+    # Extract name and extension safely
+    original_name = Path(uploaded_file.name).stem  # Avoid issues with multiple dots
+    ext = Path(uploaded_file.name).suffix.lower()  # Get file extension safely
+
+    # Sanitize filename
+    safe_name = slugify(original_name)
+
+    # Generate unique file name
+    unique_id = uuid.uuid4().hex[:6]
+    file_name = f"{safe_name}_{unique_id}{ext}"
     file_path = os.path.join(temp_dir, file_name)
-    
+
+    # Save the file in chunks
     with open(file_path, 'wb+') as destination:
         for chunk in uploaded_file.chunks():
             destination.write(chunk)
-    
+
     return file_path
 
 
@@ -62,13 +71,32 @@ def move_to_downloads(file_path, original_name, extension):
     os.makedirs(downloads_dir, exist_ok=True)  # Ensure 'downloads' directory exists
 
     for old_file in os.listdir(downloads_dir):
-        if old_file.startswith(original_name) and old_file.endswith(ext):
+        if old_file.startswith(original_name) and old_file.endswith(extension):
             os.remove(os.path.join(downloads_dir, old_file))
+
+    file_path = os.path.abspath(file_path)
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"❌ File not found before moving: {file_path}")
     
     unique_id = uuid.uuid4().hex[:6]
     new_file_path = os.path.join(downloads_dir, f"{original_name}_{unique_id}{extension}")
-    shutil.move(file_path, new_file_path)
-    
+    print(f"Moving file to: {new_file_path}")
+    print(f"Original file path: {file_path}")
+    try:
+        if not os.path.exists(file_path):
+            print(f"❌ File does NOT exist before moving: {file_path}")
+            raise FileNotFoundError(f"File not found before moving: {file_path}")
+
+        print(f"✅ File exists, proceeding with move: {file_path}")
+
+        shutil.move(file_path, new_file_path)
+        print(f"File moved to: {new_file_path}")
+    except Exception as e:
+        raise RuntimeError(f"❌ Failed to move file: {e}")
+    if not os.path.exists(new_file_path):
+        raise FileNotFoundError(f"❌ File move failed: {new_file_path}")
+
     return new_file_path
 
 from django.http import FileResponse

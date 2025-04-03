@@ -27,7 +27,6 @@ register_heif_opener()
 # ✅ Merge PDFs
 @api_view(['POST'])
 def merge_pdfs_view(request):
-    print(request.FILES)  # Debugging
     file_paths = [save_temp_file(f) for f in request.FILES.getlist('files')]
     print("Saved file paths:", file_paths)  # Debugging
 
@@ -58,16 +57,28 @@ def merge_pdfs_view(request):
         # ✅ Delete merged file from downloads after a short delay
         time.sleep(2)
         delete_temp_file(output_file)
+        for file in file_paths:
+            if os.path.exists(file):
+                delete_temp_file(file)
+        # threading.Thread(target=delete_temp_file, args=(output_file,)).start()
 
         return response
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-    finally:
-        # ✅ Delete temporary uploaded PDFs
-        for file in file_paths:
-            delete_temp_file(file)
+    # finally:
+    #     # ✅ Delete temporary uploaded PDFs
+    #     threading.Thread(target=delete_temp_file, args=(output_file,)).start()
+    #     for file in file_paths:
+    #         if os.path.exists(file):
+    #             delete_temp_file(file)
+    #         else:
+    #             print(f"⚠️ File already deleted or missing: {file}")
+        # time.sleep(2)
+        # delete_temp_file(output_file)
+        # threading.Thread(target=delete_temp_file, args=(file,)).start()  
+        
 
 
 # ✅ Split PDF
@@ -124,6 +135,9 @@ def split_pdf_view(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+    finally:
+        threading.Thread(target=delete_temp_file, args=(tmp_file_path,)).start() 
 
 
 
@@ -171,6 +185,9 @@ def convert_pdf_to_word_view(request):
 # ✅ Convert Word to PDF
 @api_view(['POST'])
 def convert_word_to_pdf_view(request):
+    print("Request FILES:", request.FILES)
+    if 'file' not in request.FILES:
+        return Response({'error': "No file uploaded"}, status=400)
     file = save_temp_file(request.FILES['file'])
     output_file = None
 
