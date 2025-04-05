@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     merge_pdfs_view, split_pdf_view, convert_pdf_to_word_view, convert_word_to_pdf_view,
-    convert_image_to_pdf_view, convert_pdf_to_image_view
+    convert_image_to_pdf_view, convert_pdf_to_image_view, lock_unlock_pdf_view
 )
 
 urlpatterns = [
@@ -11,4 +11,6 @@ urlpatterns = [
     path('word-to-pdf/', convert_word_to_pdf_view),
     path('heif-jpg-image-to-pdf/', convert_image_to_pdf_view),
     path('pdf-to-heif-jpg-image/', convert_pdf_to_image_view),
+    path('lock-unlock-pdf/', lock_unlock_pdf_view),
+    
 ]

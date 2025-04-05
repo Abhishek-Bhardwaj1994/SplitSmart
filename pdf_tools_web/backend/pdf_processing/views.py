@@ -6,7 +6,7 @@ from PyPDF2 import PdfReader, PdfWriter
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import FileResponse
-from .utils import merge_pdfs, split_pdf, pdf_to_word, word_to_pdf, image_to_pdf, pdf_to_image
+from .utils import merge_pdfs, split_pdf, pdf_to_word, word_to_pdf, image_to_pdf, pdf_to_image, lock_pdf, unlock_pdf
 import uuid
 from PIL import Image
 from pillow_heif import register_heif_opener
@@ -292,3 +292,39 @@ def convert_pdf_to_image_view(request):
         delete_temp_file(file)
         for img in output_files:
             delete_temp_file(img)
+
+
+@api_view(['POST'])
+def lock_unlock_pdf_view(request):
+    file = request.FILES.get('file')
+    password = request.POST.get('password')
+    mode = request.POST.get('mode')
+
+    if not file or not password or not mode:
+        return Response({"error": "File, password and mode are required."}, status=400)
+
+    if len(request.FILES.getlist('file')) > 1:
+        return Response({"error": "Please upload only one PDF file."}, status=400)
+
+    temp_path = save_temp_file(file)
+
+    try:
+        if mode == 'lock':
+            output_path = lock_pdf(temp_path, password)
+        elif mode == 'unlock':
+            output_path = unlock_pdf(temp_path, password)
+        else:
+            raise ValueError("Invalid mode.")
+
+        response =  FileResponse(open(output_path, 'rb'), as_attachment=(mode == 'lock'), filename=os.path.basename(output_path))
+        if response:
+            # time.sleep(2)  # Small delay to avoid file lock
+            # delete_temp_file(output_path)
+            threading.Thread(target=delete_temp_file, args=(output_path,)).start()
+
+        return response
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    finally:
+        delete_temp_file(temp_path)

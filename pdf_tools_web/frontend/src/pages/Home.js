@@ -1,18 +1,19 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Container, Grid, Paper, Card, CardContent, CardActions } from "@mui/material";
 import { PictureAsPdf, HorizontalSplit, SwapHoriz, Image } from "@mui/icons-material";
-import MergePDF from "../components/MergePDF";
-import SplitPDF from "../components/SplitPDF";
-import ConvertPDF from "../components/ConvertPDF";
-import ImageToPDF from "../components/ImageToPDF";
-import PDFToImage from "../components/PDFToImage";
+// import MergePDF from "../components/MergePDF";
+// import SplitPDF from "../components/SplitPDF";
+// import ConvertPDF from "../components/ConvertPDF";
+// import ImageToPDF from "../components/ImageToPDF";
+// import PDFToImage from "../components/PDFToImage";
 
 const tools = [
   { title: "Merge PDFs", path: "/merge-pdf", icon: <PictureAsPdf fontSize="large" /> },
   { title: "Split PDF", path: "/split-pdf", icon: <HorizontalSplit fontSize="large" /> },
   { title: "Convert PDF", path: "/convert-pdf", icon: <SwapHoriz fontSize="large" /> },
   { title: "Image to PDF", path: "/heif-jpg-image-to-pdf", icon: <Image fontSize="large" /> },
-  { title: "PDF to Image", path: "/pdf-to-heif-jpg-image", icon: <PictureAsPdf fontSize="large" /> },
+  // { title: "PDF to Image", path: "/pdf-to-heif-jpg-image", icon: <PictureAsPdf fontSize="large" /> },
+  { title: "Lock/Unlock PDF", path: "/lock-unlock-pdf", icon: <PictureAsPdf fontSize="large" /> },
 ];
 
 const Home = () => {

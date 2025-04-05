@@ -8,6 +8,7 @@ import ConvertPDF from "./components/ConvertPDF";
 import EditPDF from "./components/EditPDF";
 import ImageToPDF from "./components/ImageToPDF";
 import PDFToImage from "./components/PDFToImage";
+import LockUnlockPDF from "./components/LockUnlockPDF";
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="/edit-pdf" element={<EditPDF />} />
         <Route path="/heif-jpg-image-to-pdf" element={<ImageToPDF />} />
         <Route path="/pdf-to-heif-jpg-image" element={<PDFToImage />} />
+        <Route path="/lock-unlock-pdf" element={<LockUnlockPDF />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </Router>

@@ -191,3 +191,39 @@ def pdf_to_image(pdf_file, format="JPEG"):
     except Exception as e:
         raise RuntimeError(f"PDF to Image conversion failed: {str(e)}")
     return output_files
+
+
+
+
+def lock_pdf(input_path, password):
+    output_path = get_output_path("locked", ".pdf")
+    reader = PdfReader(input_path)
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        writer.add_page(page)
+
+    writer.encrypt(password)
+    with open(output_path, "wb") as f:
+        writer.write(f)
+
+    return output_path
+
+def unlock_pdf(input_path, password):
+    reader = PdfReader(input_path)
+    if not reader.is_encrypted:
+        raise Exception("File is not encrypted.")
+
+    if not reader.decrypt(password):
+        raise Exception("Incorrect password.")
+
+    output_path = get_output_path("unlocked", ".pdf")
+    writer = PdfWriter()
+
+    for page in reader.pages:
+        writer.add_page(page)
+
+    with open(output_path, "wb") as f:
+        writer.write(f)
+
+    return output_path
