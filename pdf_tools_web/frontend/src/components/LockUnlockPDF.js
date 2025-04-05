@@ -1,6 +1,7 @@
 import React, { useState,useRef  } from 'react';
-import axios from 'axios';
+// import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import axios from "../services/api";
 
 const LockUnlockPDF = () => {
   const [file, setFile] = useState(null);
@@ -82,117 +83,163 @@ const LockUnlockPDF = () => {
   };
 
   return (
-    <div className="lock-unlock-container" style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem', border: '1px solid #ccc', borderRadius: 8 }}>
+    
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <button
+  onClick={() => navigate('/')}
+  style={{
+    position: "fixed",        // stays fixed at top-left
+    top: "20px",
+    left: "20px",
+    backgroundColor: "#9C27B0",
+    color: "white",
+    padding: "10px 20px",
+    borderRadius: "20px",
+    fontWeight: "bold",
+    border: "none",
+    cursor: "pointer",
+    zIndex: 1000
+  }}
+>
+  HOME
+</button>
+
+  {/* Centered container */}
+  <div
+    className="lock-unlock-container"
+    style={{
+      maxWidth: 600,
+      width: '90%',
+      margin: '2rem auto',
+      padding: '1rem',
+      border: '1px solid #ccc',
+      borderRadius: 8,
+      zIndex: 2,
+      backgroundColor: 'white',
+      position: 'relative'
+    }}
+  >
+   
+
+
+    <h2>🔐 Lock / Unlock PDF</h2>
+
+    <div style={{ marginBottom: '1rem' }}>
+      <input type="file" accept="application/pdf" onChange={handleFileChange} ref={fileInputRef} />
+    </div>
+
+    <div style={{ marginBottom: '1rem' }}>
+      <label>
+        <input
+          type="radio"
+          value="lock"
+          checked={mode === 'lock'}
+          onChange={() => handleModeChange('lock')}
+          style={{ marginRight: '0.5rem' }}
+        />
+        Lock PDF
+      </label>
+      <label style={{ marginLeft: '1rem' }}>
+        <input
+          type="radio"
+          value="unlock"
+          checked={mode === 'unlock'}
+          onChange={() => handleModeChange('unlock')}
+          style={{ marginRight: '0.5rem' }}
+        />
+        Unlock PDF
+      </label>
+    </div>
+
+    <div style={{ marginBottom: '1rem', position: 'relative' }}>
+      <input
+        type={showPassword ? 'text' : 'password'}
+        placeholder={mode === 'lock' ? "Set Password" : "Enter Password"}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={{ width: '95%', padding: '0.5rem' }}
+      />
       <button
-        onClick={() => navigate('/')}
+        onClick={() => setShowPassword(!showPassword)}
         style={{
-          backgroundColor: '#9C27B0',
-          color: 'white',
-          padding: '10px 20px',
-          borderRadius: '20px',
-          fontWeight: 'bold',
-          border: 'none',
           position: 'absolute',
-          top: '20px',
-          left: '20px',
+          right: 10,
+          top: 5,
+          background: 'none',
+          border: 'none',
+          color: '#9C27B0',
           cursor: 'pointer',
-          zIndex: 1000
+          fontSize: 14,
         }}
       >
-        HOME
+        {showPassword ? '🙈 Hide' : '👁 Show'}
       </button>
-
-      <h2>🔐 Lock / Unlock PDF</h2>
-
-      <div style={{ marginBottom: '1rem' }}>
-        <input type="file" accept="application/pdf" onChange={handleFileChange} 
-        ref={fileInputRef}
-        />
-      </div>
-
-      <div style={{ marginBottom: '1rem' }}>
-        <label>
-          <input
-            type="radio"
-            value="lock"
-            checked={mode === 'lock'}
-            onChange={() => handleModeChange('lock')}
-            style={{ marginRight: '0.5rem' }}
-          />
-          Lock PDF
-        </label>
-        <label style={{ marginLeft: '1rem' }}>
-          <input
-            type="radio"
-            value="unlock"
-            checked={mode === 'unlock'}
-            onChange={() => handleModeChange('unlock')}
-            style={{ marginRight: '0.5rem' }}
-          />
-          Unlock PDF
-        </label>
-      </div>
-
-      <div style={{ marginBottom: '1rem', position: 'relative' }}>
-        <input
-          type={showPassword ? 'text' : 'password'}
-          placeholder={mode === 'lock' ? "Set Password" : "Enter Password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: '95%', padding: '0.5rem' }}
-        />
-        <button
-          onClick={() => setShowPassword(!showPassword)}
-          style={{
-            position: 'absolute',
-            right: 10,
-            top: 5,
-            background: 'none',
-            border: 'none',
-            color: '#9C27B0',
-            cursor: 'pointer',
-            fontSize: 14,
-          }}
-        >
-          {showPassword ? '🙈 Hide' : '👁 Show'}
-        </button>
-      </div>
-
-      <div style={{ marginBottom: '1rem' }}>
-        <button
-          onClick={handleSubmit}
-          disabled={isProcessing}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          {isProcessing ? (mode === 'lock' ? '🔐 Locking...' : '🔓 Unlocking...') : 'Submit'}
-        </button>
-      </div>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      {mode === 'lock' && downloadUrl && (
-        <div style={{ marginTop: '1rem' }}>
-          ✅ PDF successfully locked!
-          <br />
-          <a href={downloadUrl} download="locked.pdf">🔽 Download Locked PDF</a>
-        </div>
-      )}
-
-      {mode === 'unlock' && previewUrl && (
-        <div style={{ marginTop: '1rem' }}>
-          ✅ PDF unlocked successfully!
-          <br />
-          <iframe src={previewUrl} width="100%" height="600px" title="PDF Preview" />
-        </div>
-      )}
     </div>
+
+    <div style={{ marginBottom: '1rem' }}>
+      <button
+        onClick={handleSubmit}
+        disabled={isProcessing}
+        style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: '#4CAF50',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}
+      >
+        {isProcessing ? (mode === 'lock' ? '🔐 Locking...' : '🔓 Unlocking...') : 'Submit'}
+      </button>
+    </div>
+
+    {error && <p style={{ color: 'red' }}>{error}</p>}
+
+    {mode === 'lock' && downloadUrl && (
+      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        ✅ PDF successfully locked!
+        <br />
+        <a href={downloadUrl} download="locked.pdf" style={{ color: '#4CAF50', fontWeight: 'bold' }}>
+          🔽 Download Locked PDF
+        </a>
+      </div>
+    )}
+  </div>
+
+  {/* Full-width PDF preview */}
+  {mode === 'unlock' && previewUrl && (
+  <div style={{ width: '100%', marginTop: '2rem', textAlign: 'center' }}>
+    <h3>✅ PDF unlocked successfully!</h3>
+    <iframe
+      src={previewUrl}
+      width="100%"
+      height="800px"
+      title="PDF Preview"
+      style={{ border: 'none' }}
+    />
+    <br />
+    <a
+      href={previewUrl}
+      download="unlocked.pdf"
+      style={{
+        display: 'inline-block',
+        marginTop: '1rem',
+        padding: '0.5rem 1rem',
+        backgroundColor: '#4CAF50',
+        color: 'white',
+        borderRadius: '5px',
+        textDecoration: 'none',
+        fontWeight: 'bold'
+      }}
+    >
+      🔽 Download Unlocked PDF
+    </a>
+  </div>
+)}
+
+
+</div>
+
   );
 };
 
