@@ -6,7 +6,7 @@ from PyPDF2 import PdfReader, PdfWriter
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import FileResponse
-from .utils import merge_pdfs, split_pdf, pdf_to_word, word_to_pdf, image_to_pdf, pdf_to_image, lock_pdf, unlock_pdf
+from .utils import compress_pdf_file,merge_pdfs, split_pdf, pdf_to_word, word_to_pdf, image_to_pdf, pdf_to_image, lock_pdf, unlock_pdf
 import uuid
 from PIL import Image
 from pillow_heif import register_heif_opener
@@ -328,3 +328,84 @@ def lock_unlock_pdf_view(request):
         return Response({"error": str(e)}, status=500)
     finally:
         delete_temp_file(temp_path)
+
+
+
+@api_view(['POST'])
+def compress_pdf_view(request):
+    try:
+        pdf_file = request.FILES.get("file")
+
+        if not pdf_file or not pdf_file.name.endswith('.pdf'):
+            return JsonResponse({"error": "Invalid PDF file."}, status=400)
+
+        # Save the file temporarily
+        temp_path = save_temp_file(pdf_file)
+
+        # Compress it
+        compressed_path = compress_pdf_file(temp_path)
+
+        # Delete the original temp file
+        
+
+        if compressed_path:
+            response = FileResponse(open(compressed_path, 'rb'), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(compressed_path)}"'
+            threading.Thread(target=delete_temp_file, args=(compressed_path,)).start()
+            return response
+        else:
+            return Response({"error": "Compression failed."}, status=500)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+    finally:
+        delete_temp_file(temp_path)
+
+
+from .editpdfutils import (
+    crop_pdf, rotate_pdf, delete_pages, reorder_pages,
+    add_text_to_pdf, add_image_to_pdf, draw_on_pdf, apply_filter_to_pdf
+)
+
+# @api_view(["POST"])
+# def edit_pdf_view(request):
+#     try:
+#         pdf_file = request.FILES["pdf"]
+#         operation = request.POST["operation"]
+#         params = request.POST.get("params", "{}")
+#         params = json.loads(params)
+
+#         input_path = save_temp_file(pdf_file)
+#         output_path = get_output_path()
+
+#         # Perform edit
+#         if operation == "crop":
+#             crop_pdf(input_path, output_path, params)
+#         elif operation == "rotate":
+#             rotate_pdf(input_path, output_path, params)
+#         elif operation == "add_text":
+#             add_text_to_pdf(input_path, output_path, params)
+#         elif operation == "delete_pages":
+#             delete_pages(input_path, output_path, params)
+#         elif operation == "reorder_pages":
+#             reorder_pages(input_path, output_path, params)
+#         elif operation == "draw":
+#             draw_on_pdf(input_path, output_path, params)
+#         else:
+#             delete_temp_file(input_path)
+#             return JsonResponse({"error": "Invalid operation"}, status=400)
+
+#         response = FileResponse(open(output_path, "rb"), as_attachment=True, filename="edited.pdf")
+
+#         # Clean up after response is sent
+#         def cleanup(response):
+#             delete_temp_file(input_path)
+#             delete_temp_file(output_path)
+#             return response
+
+#         response.close = lambda *args, **kwargs: cleanup(response)
+#         return response
+
+#     except Exception as e:
+#         return Response({"error": str(e)}, status=500)

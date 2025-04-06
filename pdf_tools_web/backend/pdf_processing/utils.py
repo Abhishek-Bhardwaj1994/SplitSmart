@@ -227,3 +227,17 @@ def unlock_pdf(input_path, password):
         writer.write(f)
 
     return output_path
+
+
+
+def compress_pdf_file(input_path):
+# def compress_pdf(input_path):
+    try:
+        output_path = get_output_path(input_path, '.pdf')
+        doc = fitz.open(input_path)
+        doc.save(output_path, deflate=True)  # Optional: compress images too
+        doc.close()
+        return output_path
+    except Exception as e:
+        print(f"[❌ Compression error]: {e}")
+        return None
