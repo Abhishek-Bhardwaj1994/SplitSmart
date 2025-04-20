@@ -32,169 +32,48 @@ def get_output_path(original_path, ext):
     filename = f"{Path(original_path).stem}_changed_{unique_id}{ext}"
     return os.path.join(DOWNLOADS_DIR, filename)
 
-def crop_pdf(input_path, crop_params):
-    output_path = get_output_path(input_path, ".pdf")
+from PyPDF2 import PdfReader, PdfWriter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import io
+import json
+
+def draw_on_pdf(input_path, draw_data, output_path):
     reader = PdfReader(input_path)
     writer = PdfWriter()
 
-    for i, page in enumerate(reader.pages):
-        left, top, right, bottom = crop_params.get(str(i), (0, 0, 0, 0))
+    for page_num, page in enumerate(reader.pages):
+        packet = io.BytesIO()
         media_box = page.mediabox
-        media_box.lower_left = (media_box.left + left, media_box.bottom + bottom)
-        media_box.upper_right = (media_box.right - right, media_box.top - top)
+        width = float(media_box.width)
+        height = float(media_box.height)
+
+        c = canvas.Canvas(packet, pagesize=(width, height))
+
+        if str(page_num) in draw_data:
+            for stroke in draw_data[str(page_num)]:
+                color = HexColor(stroke["color"])
+                width_val = stroke["width"]
+                points = stroke["points"]
+                if len(points) >= 2:
+                    c.setStrokeColor(color)
+                    c.setLineWidth(width_val)
+                    c.moveTo(points[0][0], height - points[0][1])
+                    for pt in points[1:]:
+                        c.lineTo(pt[0], height - pt[1])
+                    c.stroke()
+
+        c.save()
+        packet.seek(0)
+
+        overlay_reader = PdfReader(packet)
+        page.merge_page(overlay_reader.pages[0])
         writer.add_page(page)
 
     with open(output_path, "wb") as f:
         writer.write(f)
-
-    return output_path
-
-
-def rotate_pdf(input_path, rotation_data):
-    output_path = get_output_path(input_path, suffix="_rotated")
-    reader = PdfReader(input_path)
-    writer = PdfWriter()
-
-    for i, page in enumerate(reader.pages):
-        angle = rotation_data.get(str(i), 0)
-        page.rotate(angle)
-        writer.add_page(page)
-
-    with open(output_path, "wb") as f:
-        writer.write(f)
-
-    return output_path
-
-
-def delete_pages(input_path, pages_to_delete):
-    output_path = get_output_path(input_path, suffix="_pages_deleted")
-    reader = PdfReader(input_path)
-    writer = PdfWriter()
-
-    for i, page in enumerate(reader.pages):
-        if i not in pages_to_delete:
-            writer.add_page(page)
-
-    with open(output_path, "wb") as f:
-        writer.write(f)
-
-    return output_path
-
-
-def reorder_pages(input_path, new_order):
-    output_path = get_output_path(input_path, suffix="_reordered")
-    reader = PdfReader(input_path)
-    writer = PdfWriter()
-
-    for i in new_order:
-        writer.add_page(reader.pages[i])
-
-    with open(output_path, "wb") as f:
-        writer.write(f)
-
-    return output_path
-
-
-def add_text_to_pdf(input_path, text_items):
-    output_path = get_output_path(input_path, suffix="_text_added")
-    packet = io.BytesIO()
-    can = canvas.Canvas(packet, pagesize=letter)
-
-    for item in text_items:
-        x, y = item['position']
-        text = item['text']
-        font_size = item.get("font_size", 12)
-        can.setFont("Helvetica", font_size)
-        can.drawString(x, y, text)
-
-    can.save()
-    packet.seek(0)
-
-    overlay_pdf = PdfReader(packet)
-    base_pdf = PdfReader(input_path)
-    writer = PdfWriter()
-
-    for i, page in enumerate(base_pdf.pages):
-        base_page = page
-        if i < len(overlay_pdf.pages):
-            base_page.merge_page(overlay_pdf.pages[i])
-        writer.add_page(base_page)
-
-    with open(output_path, "wb") as f:
-        writer.write(f)
-
-    return output_path
-
-
-def add_image_to_pdf(input_path, image_path, position_data):
-    output_path = get_output_path(input_path, suffix="_image_added")
-    doc = fitz.open(input_path)
-    img_rect = fitz.Rect(*position_data["coords"])
-    page_num = position_data["page"]
-
-    if page_num < len(doc):
-        page = doc[page_num]
-        page.insert_image(img_rect, filename=image_path)
-
-    doc.save(output_path)
-    doc.close()
-
-    return output_path
-
-
-def draw_on_pdf(input_path, draw_items):
-    output_path = get_output_path(input_path, suffix="_drawn")
-    doc = fitz.open(input_path)
-
-    for item in draw_items:
-        page = doc[item["page"]]
-        shape = page.new_shape()
-        color = item.get("color", (1, 0, 0))  # default red
-
-        if item["type"] == "line":
-            shape.draw_line(item["from"], item["to"])
-        elif item["type"] == "rect":
-            shape.draw_rect(item["rect"])
-        elif item["type"] == "circle":
-            shape.draw_circle(item["center"], item["radius"])
-        shape.finish(color=color, fill=item.get("fill", False))
-        shape.commit()
-
-    doc.save(output_path)
-    doc.close()
-
-    return output_path
-
-
-def apply_filter_to_pdf(input_path, filter_type="grayscale"):
-    output_path = get_output_path(input_path, suffix="_filtered")
-    doc = fitz.open(input_path)
-
-    for page in doc:
-        pix = page.get_pixmap()
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-
-        if filter_type == "grayscale":
-            img = img.convert("L").convert("RGB")
-        elif filter_type == "sepia":
-            sepia = Image.new("RGB", img.size)
-            pixels = img.load()
-            for y in range(img.height):
-                for x in range(img.width):
-                    r, g, b = pixels[x, y]
-                    tr = int(0.393 * r + 0.769 * g + 0.189 * b)
-                    tg = int(0.349 * r + 0.686 * g + 0.168 * b)
-                    tb = int(0.272 * r + 0.534 * g + 0.131 * b)
-                    sepia.putpixel((x, y), (min(tr, 255), min(tg, 255), min(tb, 255)))
-            img = sepia
-
-        page_rect = page.rect
-        img_path = f"/tmp/temp_filtered_{page.number}.png"
-        img.save(img_path)
-        page.clean_contents()
-        page.insert_image(page_rect, filename=img_path)
-
-    doc.save(output_path)
-    doc.close()
 
     return output_path

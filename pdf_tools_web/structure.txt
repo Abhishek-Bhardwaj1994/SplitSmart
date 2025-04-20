@@ -47,3 +47,29 @@ pdf-tools-app/
 │── nginx/                   # Nginx configuration for production deployment
 │   ├── nginx.conf           # Nginx config file
 │── README.md                # Documentation
+
+
+src/
+├── components/
+│   ├── EditPDF/
+│   │   ├── EditPDF.jsx         # Main component that handles session upload & PDF display
+│   │   ├── DrawCanvas.jsx      # UI for drawing shapes on the PDF
+│   │   ├── CropTool.jsx        # (future) Crop functionality
+│   │   ├── AddTextTool.jsx     # (future) Add text to PDF
+│   │   ├── AddImageTool.jsx    # (future) Add image to PDF
+│   │   ├── RotateTool.jsx      # (future) Rotate PDF pages
+│   │   ├── FilterTool.jsx      # (future) Apply filters
+│   │   ├── DeletePagesTool.jsx # (future) Delete pages
+│   │   ├── ReorderPagesTool.jsx# (future) Reorder pages
+│   │   └── Toolbar.jsx         # Common toolbar with buttons
+│
+├── services/
+│   └── api.js                  # Axios instance for making API calls
+│
+├── App.jsx
+└── main.jsx
+
+        │
+        ├── RotateTool.jsx        ← Handles rotate page UI & API call
+        ├── DeletePagesTool.jsx   ← Handles UI to select/delete pages
+        ├── ReorderPagesTool.jsx  ← Drag-and-drop interface for reordering

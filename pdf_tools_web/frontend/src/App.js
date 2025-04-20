@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import MergePDF from "./components/MergePDF";
 import SplitPDF from "./components/SplitPDF";
 import ConvertPDF from "./components/ConvertPDF";
-import EditPDF from "./components/EditPDF";
+import EditPDF from './components/EditPDF/EditPDF';
 import ImageToPDF from "./components/ImageToPDF";
 import PDFToImage from "./components/PDFToImage";
 import LockUnlockPDF from "./components/LockUnlockPDF";

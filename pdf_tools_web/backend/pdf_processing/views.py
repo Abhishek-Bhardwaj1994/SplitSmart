@@ -364,9 +364,7 @@ def compress_pdf_view(request):
 
 
 from .editpdfutils import (
-    crop_pdf, rotate_pdf, delete_pages, reorder_pages,
-    add_text_to_pdf, add_image_to_pdf, draw_on_pdf, apply_filter_to_pdf
-)
+    draw_on_pdf)
 
 # @api_view(["POST"])
 # def edit_pdf_view(request):
